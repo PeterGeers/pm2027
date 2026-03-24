@@ -11,13 +11,13 @@ Modernisering van het FH-DCE Presidents' Meeting registratiesysteem van PHP/jQue
 | Frontend + API      | Next.js 14+ (App Router) + TypeScript        | Full-stack framework, SSR, API routes              |
 | Styling             | Tailwind CSS 3                               | Utility-first CSS, responsive design               |
 | Authenticatie       | AWS Cognito + NextAuth.js (Cognito provider) | Registratie, login, wachtwoord reset, MFA, sessies |
-| Database            | PostgreSQL (AWS RDS of Neon)                 | Relationele data, boekingen, betalingen            |
+| Database            | PostgreSQL (Neon)                            | Serverless Postgres, relationele data, boekingen   |
 | ORM                 | Prisma                                       | Type-safe database queries, migraties              |
 | Internationalisatie | next-intl                                    | Multi-language UI (EN, NL, DE, FR)                 |
 | Email               | Amazon SES                                   | Transactionele emails (bevestigingen, reminders)   |
 | Excel Export        | SheetJS (xlsx)                               | Spreadsheet downloads voor admin                   |
-| Hosting             | Vercel of AWS Amplify                        | Zero-config deployment, SSL, preview deploys       |
-| Infra as Code       | AWS CDK (optioneel)                          | Cognito User Pool, SES, RDS provisioning           |
+| Hosting             | Vercel                                       | Zero-config deployment, SSL, preview deploys       |
+| Infra as Code       | AWS CDK (optioneel)                          | Cognito User Pool, SES provisioning                |
 
 ## Authenticatie — AWS Cognito
 
@@ -103,7 +103,15 @@ messages/
 - Foutmeldingen
 - Datum- en valutaformaten (via `Intl` API)
 
-## Database — PostgreSQL + Prisma
+## Database — Neon (Serverless PostgreSQL) + Prisma
+
+### Waarom Neon
+
+- Serverless: schaalt naar 0 bij inactiviteit, betaal alleen voor gebruik
+- Free tier ruim voldoende: 100 CU-hrs/maand, 0.5 GB storage, tot 2 CU (8 GB RAM)
+- Database branching: per Vercel preview deploy een eigen database branch
+- Autoscaling en read replicas beschikbaar
+- Geen VPC/security groups configuratie nodig
 
 ### Vereenvoudiging t.o.v. huidige schema
 
@@ -164,21 +172,13 @@ enum BookingStatus {
 - React Email of MJML voor responsive HTML emails
 - Per taal een template variant
 
-## Hosting & Deployment
-
-### Optie A: Vercel (aanbevolen)
+## Hosting & Deployment — Vercel
 
 - Zero-config deployment vanuit Git
 - Automatische preview deploys per branch/PR
 - Edge functions voor snelle response
 - Gratis tier ruim voldoende
 - Custom domain: pm2027.hdc-centrum.nl
-
-### Optie B: AWS Amplify
-
-- Alles binnen AWS ecosysteem
-- Iets meer configuratie, maar volledige controle
-- Past beter als je RDS en Cognito al in AWS hebt
 
 ## Development Tooling
 
@@ -308,7 +308,7 @@ COGNITO_CLIENT_ID=xxx
 COGNITO_CLIENT_SECRET=xxx
 COGNITO_ISSUER=https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_xxx
 NEXTAUTH_SECRET=xxx
-DATABASE_URL=postgresql://user:pass@host:5432/pm2027
+DATABASE_URL=postgresql://user:pass@ep-xxx.eu-central-1.aws.neon.tech/pm2027?sslmode=require
 SES_REGION=eu-west-1
 ```
 
@@ -320,3 +320,7 @@ SES_REGION=eu-west-1
 4. **Bestaande data** — eenmalige migratie van MariaDB naar PostgreSQL indien nodig
 5. **Emails** — SES domain verificatie voor pm2027.hdc-centrum.nl
 6. **Club logo's** — migreren naar `/public/club_logos/`
+
+git remote add origin https://github.com/PeterGeers/pm2027.git
+git branch -M main
+git push -u origin main
